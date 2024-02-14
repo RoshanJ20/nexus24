@@ -1,0 +1,7 @@
+0 LED
+1 Jumper Cable
+2 Stabilizer
+3 Transistor
+4 Filament
+5 Ultrasonic Sensor
+6 Breadboard
