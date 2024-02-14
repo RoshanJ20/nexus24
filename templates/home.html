@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scanner</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://unpkg.com/html5-qrcode@2.0.9/dist/html5-qrcode.min.js"></script>
+    <style>
+        body {
+            background-color: #5fafff;
+        }
+        .scanner-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .scanner-content {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            width: 100%;
+            max-width: 600px; /* Adjust based on your preference */
+        }
+        .btn-custom {
+            width: 100%;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container scanner-container">
+        <div class="scanner-content text-center">
+            <div id='qr-reader' class='qr-reader-custom'></div>
+            <button id="borrow" class="btn btn-primary btn-custom" onclick="borrow()" style="display:none;">Borrow</button>
+            <button id="return" class="btn btn-secondary btn-custom" onclick="returnItem()" style="display:none;">Return</button>
+        </div>
+    </div>
+    <script>
+        function onScanSuccess(decodedText, decodedResult) {
+            console.log(`Code scanned = ${decodedText}`, decodedResult);
+            sessionStorage.setItem('barcode', decodedText);
+            document.getElementById("borrow").style.display = "block";
+            document.getElementById("return").style.display = "block";
+        }
+    
+        function borrow() {
+            const barcode = sessionStorage.getItem('barcode');
+            
+            // Asynchronously call the rotate endpoint without waiting for the response
+            fetch("http://192.168.32.220:5000/rotate")
+                .then(response => {
+                    console.log('Rotate endpoint called successfully');
+                    // Handle response if necessar**-y
+                })
+                .catch(error => {
+                    console.error('Error calling rotate endpoint:', error);
+                    // Handle any errors that occurred during the fetch
+                });
+    
+            // Redirect to experiments.html with the barcode as a query parameter
+            window.location.href = `/experiments?barcode=${encodeURIComponent(barcode)}`;
+        }
+    
+        function returnItem() {
+            const barcode = sessionStorage.getItem('barcode');
+            window.location.href = `/return?barcode=${encodeURIComponent(barcode)}`;
+        }
+    
+        var html5QrcodeScanner = new Html5QrcodeScanner('qr-reader', { fps: 10, qrbox: 250 });
+        html5QrcodeScanner.render(onScanSuccess);
+    </script>
+    
+
+    <!-- Bootstrap JS, Popper.js, and jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

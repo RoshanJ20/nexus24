@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Object Detection</title>
+</head>
+<body>
+    <video id="video" width="640" height="480" autoplay></video>
+    <button id="capture">Capture</button>
+    <!-- Placeholder for detection results -->
+    <div id="detectionResults" style="display:none;">
+        <p id="detectedClass"></p>
+        <p id="confidenceScore"></p>
+    </div>
+    <script>
+        const video = document.getElementById('video');
+        const button = document.getElementById('capture');
+        const resultsDiv = document.getElementById('detectionResults');
+        const detectedClassP = document.getElementById('detectedClass');
+        const confidenceScoreP = document.getElementById('confidenceScore');
+
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => video.srcObject = stream)
+            .catch(err => console.error("Error:", err));
+
+        button.onclick = function() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 640;  // Same as video source
+            canvas.height = 480;
+            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+            canvas.toBlob(blob => {
+                const formData = new FormData();
+                formData.append('image', blob);
+                fetch('/detect', {
+                    method: 'POST',
+                    body: formData,
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);
+                    // Display the results
+                    detectedClassP.textContent = `Detected Class: ${data.class_name}`;
+                    confidenceScoreP.textContent = `Confidence Score: ${data.confidence_score}`;
+                    resultsDiv.style.display = 'block';
+                })
+                .catch(error => console.error('Error:', error));
+            }, 'image/jpeg');
+        };
+    </script>
+</body>
+</html>

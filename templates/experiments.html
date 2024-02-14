@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Experiments Selection</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            padding-top: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            padding: 20px;
+            background: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h2, h3 {
+            color: #444;
+        }
+        .experiment, .component {
+            background: #f9f9f9;
+            border: 1px solid #eee;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+        label {
+            margin-left: 5px;
+        }
+        .component {
+            margin-left: 20px;
+            margin-top: 5px;
+        }
+        button {
+            display: inline-block;
+            background: #5fbae9;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            margin: 10px 0;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #4a9cd6;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        #images{
+            height: 300px;
+            width: 300px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Select an Experiment</h2>
+        <form action="/experiments" method="post">
+            {% for experiment, components in experiments.items() %}
+                <div class="experiment">
+                    <input type="radio" id="experiment{{experiment}}" name="experiment" value="{{experiment}}" {% if experiment == selected_experiment %}checked{% endif %}>
+                    <label for="experiment{{experiment}}"><img id="images" src="{{components[0]}}" alt="Image 1"> <br> &nbsp; &nbsp; &nbsp; {{components[1]}}</label>
+                </div>
+            {% endfor %}
+            <button type="submit">Choose Experiment</button>
+        </form>
+
+        {% if show_components %}
+            <h3>Components for Experiment {{selected_experiment}}</h3>
+            <ul>
+                {% for component in components[2:]%}
+                    <li class="component">{{component}}</li>
+                {% endfor %}
+            </ul>
+            <form action="/save" method="post">
+                <button type="submit">Save</button>
+            </form>
+        {% endif %}
+    </div>
+</body>
+</html>

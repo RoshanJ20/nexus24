@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Return Experiment</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <h2 class="text-center">Return Experiment</h2>
+        <h2 class="text-center">If fault click on check, else leave empty</h2>
+        <!-- Add this button inside your <div class="container"> in return.html -->
+        <button type="button" class="btn btn-info" onclick="window.location='/detect'">Object Detection</button>
+        <form action="/return" method="post">
+            <div class="form-group">
+                <label for="exp_no">Select Experiment:</label>
+                <select class="form-control" id="exp_no" name="exp_no" onchange="showComponents(this.value)">
+                    <option value="">Please select</option>
+                    {% for exp_no, details in experiments_components.items() %}
+                    <option value="{{exp_no}}">Experiment Number: {{exp_no}} - {{details[1]}}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div id="componentsSection" style="display:none;"></div>
+            <button type="submit" class="btn btn-primary">Return</button>
+        </form>
+    </div>
+    <script>
+        const components = JSON.parse('{{ experiments_components | tojson | safe }}');
+        function showComponents(expNo) {
+            const componentsSection = document.getElementById('componentsSection');
+            componentsSection.innerHTML = ''; // Clear previous components
+            if(expNo && components[expNo]) {
+                components[expNo].slice(2).forEach((component) => { // Assuming component list starts at index 2
+                    componentsSection.innerHTML += `<div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="faultyComponents[]" value="${component}" id="${component}">
+                        <label class="form-check-label" for="${component}">${component}</label>
+                    </div>`;
+                });
+                componentsSection.style.display = 'block';
+            } else {
+                componentsSection.style.display = 'none';
+            }
+        }
+    </script>
+    <!-- Bootstrap JS and jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js" ></script>
+</body>
+</html>
