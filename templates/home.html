@@ -46,13 +46,7 @@
             sessionStorage.setItem('barcode', decodedText);
             document.getElementById("borrow").style.display = "block";
             document.getElementById("return").style.display = "block";
-        }
-    
-        function borrow() {
-            const barcode = sessionStorage.getItem('barcode');
-            
-            // Asynchronously call the rotate endpoint without waiting for the response
-            fetch("http://192.168.32.220:5000/rotate")
+            fetch("http://192.168.198.220:5500/rotate", {mode: 'no-cors'})
                 .then(response => {
                     console.log('Rotate endpoint called successfully');
                     // Handle response if necessar**-y
@@ -61,8 +55,10 @@
                     console.error('Error calling rotate endpoint:', error);
                     // Handle any errors that occurred during the fetch
                 });
+        }
     
-            // Redirect to experiments.html with the barcode as a query parameter
+        function borrow() {
+            const barcode = sessionStorage.getItem('barcode');
             window.location.href = `/experiments?barcode=${encodeURIComponent(barcode)}`;
         }
     

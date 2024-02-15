@@ -21,30 +21,43 @@
             fetchComponents();
         });
 
+
         var socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port);
-        
+
         socket.on('connect', function() {
             console.log('Socket connected...');
-            $('#capture').click(function() {
-                var canvas = document.createElement('canvas');
-                canvas.width = 640; canvas.height = 480;
-                var context = canvas.getContext('2d');
-                context.drawImage(video, 0, 0, 640, 480);
-                var dataURL = canvas.toDataURL('image/jpeg');
-                socket.emit('image', {image: dataURL});
-            });
+            startContinuousCapture();
         });
 
         socket.on('detection_result', function(data) {
             $('#results').html(`<p>Detected: ${data.class_name} with confidence ${data.confidence.toFixed(2)}</p>`);
-            // Check the checkbox corresponding to the detected component
-
-            const detectedComponent = data.class_name.match(/[a-zA-Z\s]+/)[0].trim();
-
-            $(`input[data-component-name="${detectedComponent}"]`).prop('checked', true);
-
-            console.log(detectedComponent);
+            if (data.confidence > 0.95) {
+                // Assuming the format "Detected: 5 Ultrasonic Sensor with confidence 0.50"
+                const detectedComponent = data.class_name.match(/[a-zA-Z\s]+/)[0].trim();
+                $(`input[data-component-name="${detectedComponent}"]`).prop('checked', true);
+            }
         });
+
+        function startContinuousCapture() {
+            const video = document.getElementById('video');
+            const canvas = document.createElement('canvas');
+            canvas.width = 640; canvas.height = 480;
+            const context = canvas.getContext('2d');
+
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(stream => {
+                    video.srcObject = stream;
+                    captureFrame();
+                })
+                .catch(err => console.error("Error:", err));
+
+            function captureFrame() {
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                var dataURL = canvas.toDataURL('image/jpeg');
+                socket.emit('image', {image: dataURL});
+                setTimeout(captureFrame, 1000); // Adjust frame capture interval as needed
+            }
+        }
 
         function fetchComponents() {
             // Assuming the route '/components_list' returns a list of components

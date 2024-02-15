@@ -29,7 +29,8 @@ socketio = SocketIO(app)
 os.environ['MONGO_URI'] = "mongodb://localhost:27017/nexus"
 
 load_dotenv()
-CORS(app, methods=['GET', 'POST', 'PUT', 'DELETE'])
+CORS(app, methods=['GET', 'POST', 'PUT', 'DELETE'], resources={r"/*": {"origins": "*"}})
+
 
 # MongoDB setup
 client = MongoClient(os.getenv('MONGO_URI'))
