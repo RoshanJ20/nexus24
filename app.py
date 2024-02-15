@@ -36,12 +36,12 @@ client = MongoClient(os.getenv('MONGO_URI'))
 db = client['nexus']
 users_col = db['users']
 components_col = db['components']
-model = load_model('D:/Nexus/app/keras_model.h5')
-class_names = [line.strip() for line in open("D:/Nexus/app/labels.txt", "r").readlines()]
+model = load_model('D:/nexus24/keras_model2.h5')
+class_names = [line.strip() for line in open("D:/nexus24/labels2.txt", "r").readlines()]
 
 
 experiments_components = {
-        '1': ["http://tinyurl.com/4vsnnsdh",'LED Bulb Project','Ultrasonic Sensor', 'LEDs', 'Jumper Wires', 'Microcontroller Board'],
+        '1': ["http://tinyurl.com/4vsnnsdh",'LED Bulb Project','Ultrasonic Sensor', 'LEDs', 'Arduino UNO', 'Breadboard'],
         '2': ["http://tinyurl.com/4xnk6dea",'Soil Moisture Project', 'Soil Moisture Sensor', 'ESP8266', 'Jumper Wires' ],
         '3': ["http://tinyurl.com/2wpbd77c",'Ultrasonic Sensor Project' ,'Arduino Uno', 'HC-SR04 Ultrasonic Sensor', 'Jumper Wires', 'Breadboard'],
         '4': ["http://tinyurl.com/4vsnnsdh",'LED Bulb Project','Arduino Uno', 'LEDs', 'Jumper Wires', 'Microcontroller Board'],
