@@ -13,23 +13,35 @@ global barcode
 
 from flask_cors import CORS
 
+from flask import Flask, render_template, request
+from flask_socketio import SocketIO, emit
+from keras.models import load_model
+import numpy as np
+from PIL import Image
+import base64
+import io
+
+app = Flask(__name__)
+app.config['SECRET_KEY'] = 'secret!'
+socketio = SocketIO(app)
+
+
 os.environ['MONGO_URI'] = "mongodb://localhost:27017/nexus"
 
 load_dotenv()
-
-app = Flask(__name__)
-app.secret_key = os.urandom(24) # For session management
-# Assuming `app` is your Flask app
-CORS(app)
+CORS(app, methods=['GET', 'POST', 'PUT', 'DELETE'])
 
 # MongoDB setup
 client = MongoClient(os.getenv('MONGO_URI'))
 db = client['nexus']
 users_col = db['users']
 components_col = db['components']
+model = load_model('D:/Nexus/app/keras_model.h5')
+class_names = [line.strip() for line in open("D:/Nexus/app/labels.txt", "r").readlines()]
+
 
 experiments_components = {
-        '1': ["http://tinyurl.com/4vsnnsdh",'LED Bulb Project','Arduino Uno', 'LEDs', 'Jumper Wires', 'Microcontroller Board'],
+        '1': ["http://tinyurl.com/4vsnnsdh",'LED Bulb Project','Ultrasonic Sensor', 'LEDs', 'Jumper Wires', 'Microcontroller Board'],
         '2': ["http://tinyurl.com/4xnk6dea",'Soil Moisture Project', 'Soil Moisture Sensor', 'ESP8266', 'Jumper Wires' ],
         '3': ["http://tinyurl.com/2wpbd77c",'Ultrasonic Sensor Project' ,'Arduino Uno', 'HC-SR04 Ultrasonic Sensor', 'Jumper Wires', 'Breadboard'],
         '4': ["http://tinyurl.com/4vsnnsdh",'LED Bulb Project','Arduino Uno', 'LEDs', 'Jumper Wires', 'Microcontroller Board'],
@@ -141,34 +153,55 @@ def increment_components(exp_no):
             {'$inc': {'quantity': 1}}  # Increment the quantity by 1
         )
 
-model = load_model('D:/Nexus/app/keras_model.h5')  # Load your Keras model
+@app.route('/detect')
+def detect_page():
+    return render_template('detect.html')
 
-@app.route('/detect', methods=['POST'])
-def detect():
-    if 'image' not in request.files:
-        return jsonify({'error': 'No image provided'}), 400
+@socketio.on('image')
+def handle_image(data):
+    # Decode image
+    img_data = data['image'].split(",")[1]
+    img = Image.open(io.BytesIO(base64.b64decode(img_data))).convert('RGB')
+    img = img.resize((224, 224))
+    img_array = np.asarray(img) / 255.0
+    img_array = np.expand_dims(img_array, axis=0)
     
-    file = request.files['image']
-    img = Image.open(file.stream).resize((224, 224))  # Adjust size as per model requirement
-    img_array = np.array(img) / 255.0  # Normalize image
-    img_array = img_array.reshape((1, 224, 224, 3))  # Adjust shape as per model requirement
-    
-    class_names = open("app/labels.txt", "r").readlines()
-
-    # Process predictions...
-    # Assuming 'predictions' is the output of model.predict()
+    # Make prediction
     predictions = model.predict(img_array)
-    index = np.argmax(predictions)
-    class_name = class_names[index].strip()  # Remove newline characters
-    confidence_score = np.max(predictions)
+    max_index = np.argmax(predictions[0])
+    predicted_class = class_names[max_index]
+    confidence = float(predictions[0][max_index])
+    
+    # Emit the result back to the client
+    emit('detection_result', {'class_name': predicted_class, 'confidence': confidence})
 
-    # Format the response to send back to the client
-    response = {
-        'class_name': class_name,
-        'confidence_score': f"{confidence_score * 100:.2f}%"
-    }
+@app.route('/save_detected_components', methods=['POST'])
+def save_detected_components():
+    data = request.get_json()
+    selected_components = data.get('components', [])
+    
+    if not selected_components:
+        return jsonify({"error": "No components selected"}), 400
 
-    return jsonify(response)
+    for component_name in selected_components:
+        # Assuming 'components_col' is your MongoDB collection for components
+        # Update the component's quantity. Adjust the field names as per your database schema.
+        components_col.update_one(
+            {'name': component_name},
+            {'$inc': {'quantity': 1}}
+        )
+
+    return jsonify({"message": "Components saved successfully"}), 200
+
+@app.route('/components_list')
+def components_list():
+    # For simplicity, extracting component names from the experiments_components dictionary
+    all_components = set()  # Use a set to avoid duplicate components
+    for experiment in experiments_components.values():
+        for component in experiment[2:]:  # Assuming component names start from index 2
+            all_components.add(component)
+        break
+    return jsonify(list(all_components))
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    socketio.run(app, debug=True)
